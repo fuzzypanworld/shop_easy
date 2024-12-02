@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping List</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Shopping List</h1>
+        <nav>
+            <a href="regular-items.html">Manage Regular Items</a>
+        </nav>
+    </header>
+
+    <main>
+        <section class="list-section">
+            <h2>Default Items</h2>
+            <ul id="defaultItems" class="item-list"></ul>
+        </section>
+
+        <section class="new-item-section">
+            <form id="itemForm">
+                <input type="text" id="itemName" placeholder="Item Name" required>
+                <input type="number" id="itemQuantity" placeholder="Quantity" min="1" required>
+                <input type="file" id="itemImage" accept="image/*">
+                <button type="submit">Add Item</button>
+            </form>
+        </section>
+    </main>
+
+    <!-- Popup for adding regular items -->
+    <div id="popup" class="popup">
+        <div class="popup-content">
+            <p>Do you want to add your regular items to this list?</p>
+            <button onclick="addRegularItems()">Yes</button>
+            <button onclick="closePopup()">No</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
