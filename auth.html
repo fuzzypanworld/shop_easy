@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In / Register</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f5f5f5;
+            --text-color: #333;
+            --error-color: #e74c3c;
+            --border-radius: 8px;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--secondary-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            block-size: 100vh;
+            margin: 0;
+        }
+        .auth-container {
+            background-color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            inline-size: 100%;
+            max-inline-size: 400px;
+        }
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-block-end: 1.5rem;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        input {
+            padding: 10px;
+            margin-block-end: 1rem;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3a7bd5;
+        }
+        .toggle-form {
+            text-align: center;
+            margin-block-start: 1rem;
+        }
+        .toggle-form a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+        .toggle-form a:hover {
+            text-decoration: underline;
+        }
+        #error-message {
+            color: var(--error-color);
+            background-color: #fde9e8;
+            border: 1px solid var(--error-color);
+            border-radius: var(--border-radius);
+            padding: 10px;
+            margin-bottom: 1rem;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="auth-container">
+        <h1>Shopping app signup/login</h1>
+        <div id="error-message"></div>
+        <form id="auth-form">
+            <input type="email" id="email" placeholder="Email" required>
+            <input type="password" id="password" placeholder="Password" required>
+            <button type="submit" id="submit-btn">Sign In</button>
+        </form>
+        <div class="toggle-form">
+            <a href="#" id="toggle-auth">Don't have an account? Register</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+   apiKey: "AIzaSyB19ueIZr-2egOonWzC4Hj2KE2CmNAItD0",
+   authDomain: "shopping-cart-cf17c.firebaseapp.com",
+      projectId: "shopping-cart-cf17c",
+   storageBucket: "shopping-cart-cf17c.firebasestorage.app",
+   messagingSenderId: "872325967351",
+   appId: "1:872325967351:web:f299e456b4f78dd37b92f2"
+};
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+
+        const form = document.getElementById('auth-form');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submit-btn');
+        const toggleAuth = document.getElementById('toggle-auth');
+        const errorMessage = document.getElementById('error-message');
+
+        let isSignIn = true;
+
+        toggleAuth.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignIn = !isSignIn;
+            submitBtn.textContent = isSignIn ? 'Sign In' : 'Register';
+            toggleAuth.textContent = isSignIn ? "Don't have an account? Register" : 'Already have an account? Sign In';
+            hideErrorMessage();
+        });
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            if (isSignIn) {
+                signIn(email, password);
+            } else {
+                register(email, password);
+            }
+        });
+
+        function signIn(email, password) {
+            firebase.auth().signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    if (user.emailVerified) {
+                        // Signed in successfully
+                        localStorage.setItem('isAuthenticated', 'true');
+                        window.location.href = 'index.html'; // Redirect to main app
+                    } else {
+                        showErrorMessage('Please verify your email before signing in.');
+                        firebase.auth().signOut(); // Sign out user if not verified
+                    }
+                })
+                .catch((error) => {
+                    handleAuthError(error);
+                });
+        }
+
+        function register(email, password) {
+            firebase.auth().createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    sendVerificationEmail(user);
+                })
+                .catch((error) => {
+                    handleAuthError(error);
+                });
+        }
+
+        function sendVerificationEmail(user) {
+            user.sendEmailVerification()
+                .then(() => {
+                    showErrorMessage('Verification email sent! Please check your inbox to verify your account.');
+                })
+                .catch((error) => {
+                    showErrorMessage('Error sending verification email. Please try again.');
+                });
+        }
+
+        function handleAuthError(error) {
+            let errorMsg = '';
+            switch (error.code) {
+                case 'auth/invalid-email':
+                    errorMsg = 'Invalid email address. Please check and try again.';
+                    break;
+                case 'auth/user-disabled':
+                    errorMsg = 'This account has been disabled. Please contact support.';
+                    break;
+                case 'auth/user-not-found':
+                    errorMsg = 'No account found with this email. Please check or register.';
+                    break;
+                case 'auth/wrong-password':
+                    errorMsg = 'Incorrect password. Please try again.';
+                    break;
+                case 'auth/email-already-in-use':
+                    errorMsg = 'This email is already registered. Try signing in or use a different email.';
+                    break;
+                case 'auth/weak-password':
+                    errorMsg = 'Password is too weak. Please use a stronger password.';
+                    break;
+                default:
+                    errorMsg = 'An unknown error occurred. Please try again.';
+            }
+            showErrorMessage(errorMsg);
+        }
+
+        function showErrorMessage(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        function hideErrorMessage() {
+            errorMessage.textContent = '';
+            errorMessage.style.display = 'none';
+        }
+
+        // Check if user is already signed in and redirect if authenticated
+        firebase.auth().onAuthStateChanged((user) => {
+            const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+            if (user && user.emailVerified && isAuthenticated) {
+                window.location.href = 'index.html';
+            }
+        });
+
+        function signOut() {
+            firebase.auth().signOut().then(() => {
+                localStorage.setItem('isAuthenticated', 'false');
+                window.location.href = 'auth.html'; // Redirect to login page
+            });
+        }
+
+        window.onload = () => {
+            const isAuthenticated = localStorage.getItem('isAuthenticated');
+            if (isAuthenticated === 'true' && firebase.auth().currentUser && firebase.auth().currentUser.emailVerified) {
+                window.location.href = 'index.html'; // Redirect to main app if already authenticated
+            }
+        };
+    </script>
+</body>
+</html>
