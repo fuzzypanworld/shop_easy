@@ -154,7 +154,7 @@
                         showErrorMessage('Please verify your email before signing in.');
                         firebase.auth().signOut(); // Sign out user if not verified
                     }
-                })
+                }) 
                 .catch((error) => {
                     handleAuthError(error);
                 });
